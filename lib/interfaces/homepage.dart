@@ -125,22 +125,10 @@ class _HomePageState extends State<HomePage> {
                 TextFormField(
                   controller: _titreController,
                   decoration: const InputDecoration(labelText: "Titre"),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Renseigner le titre';
-                    }
-                    return null;
-                  },
                 ),
                 TextFormField(
                   controller: _descriptionController,
                   decoration: const InputDecoration(labelText: "Description"),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Renseigner la description';
-                    }
-                    return null;
-                  },
                 ),
                 TextFormField(
                   readOnly: true,
@@ -162,12 +150,6 @@ class _HomePageState extends State<HomePage> {
                       }
                     }
                   );
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Renseigner la date';
-                  }
-                  return null;
                 },
               ),
               const SizedBox(
@@ -204,6 +186,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color.fromRGBO(58, 66, 86, 1.0),
+      appBar: topAppBar,
       floatingActionButton: FloatingActionButton(
         onPressed: () => _create(),
         child: const Icon(Icons.add),
@@ -223,18 +207,22 @@ class _HomePageState extends State<HomePage> {
                   return Card(
                     margin: const EdgeInsets.all(10),
                     child : ListTile(
+                      leading: CircleAvatar(
+                        child: Text('${index+1}'),
+                        backgroundColor: Color.fromRGBO(58, 66, 86, 1.0),
+                      ),
                       title: Text(documentSnapshot["titre"]),
-                      subtitle: Text(formatted + " " + documentSnapshot["description"]),
+                      subtitle: Text(documentSnapshot["description"] + "\n" + formatted),
                       trailing: SizedBox(
                         width: 100,
                         child: Row(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.edit),
+                              icon: const Icon(Icons.edit, color:Color.fromRGBO(58, 66, 86, 1.0)),
                               onPressed: () => _update(documentSnapshot)
                             ),
                              IconButton(
-                              icon: const Icon(Icons.delete),
+                              icon: const Icon(Icons.delete, color:Color.fromRGBO(58, 66, 86, 1.0)),
                               onPressed: () => _delete(documentSnapshot.id)
                             )
                           ],
@@ -252,4 +240,15 @@ class _HomePageState extends State<HomePage> {
         ),
     );
   }
+  final topAppBar = AppBar(
+    elevation: 0.1,
+    backgroundColor: Color.fromRGBO(58, 66, 86, 1.0),
+    title: Text("Liste des tâches"),
+    actions: <Widget>[
+      IconButton(
+        icon: Icon(Icons.list),
+        onPressed: () {},
+      )
+    ],
+  );
 }

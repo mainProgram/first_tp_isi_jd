@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:tp2/screens/add_todo.dart';
 
 class TodolistPage extends StatefulWidget {
@@ -21,9 +23,7 @@ class _TodolistPageState extends State<TodolistPage> {
   }
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Liste des tâches')
-      ),
+      appBar: topAppBar,
       body: Visibility(
         visible: isLoading,
         child: Center(child: CircularProgressIndicator()),
@@ -33,11 +33,15 @@ class _TodolistPageState extends State<TodolistPage> {
             itemCount: items.length,
             itemBuilder: (context, index) {
               final item = items[index] as Map;
-              final id = item['_id'] as String;
+              final id = item['id'].toString(); 
+              final formatted = DateFormat('dd-MM-yyyy').format(DateTime.parse(item['dateEcheance']));
               return ListTile(
-                leading: CircleAvatar(child: Text('${index+1}')),
+                leading: CircleAvatar(
+                  backgroundColor: Color.fromRGBO(58, 66, 86, 1.0),
+                  child: Text('${index+1}'),
+                ),                
                 title: Text(item['title']),
-                subtitle: Text(item['description']),
+                subtitle: Text(item["description"] + "\n" + formatted.toString()),
                 trailing: PopupMenuButton(
                   onSelected: (value) {
                     if(value == 'editer'){
@@ -67,10 +71,22 @@ class _TodolistPageState extends State<TodolistPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: navigateToAddPage, 
-        label: Text("Ajouter")
+        label: Text("Ajouter"),
+        backgroundColor: Color.fromRGBO(58, 66, 86, 1.0),
       ),
     );
   }
+  final topAppBar = AppBar(
+    elevation: 0.1,
+    backgroundColor: Color.fromRGBO(58, 66, 86, 1.0),
+    title: Text("Liste des tâches"),
+    actions: <Widget>[
+      IconButton(
+        icon: Icon(Icons.list),
+        onPressed: () {},
+      )
+    ],
+  );
 
   Future<void> navigateToAddPage() async{
     final route = MaterialPageRoute(
@@ -87,7 +103,6 @@ class _TodolistPageState extends State<TodolistPage> {
     final route = MaterialPageRoute(
       builder: (context) => AddTodoPage(todo: item),
     );
-    Navigator.push(context, route);
     await Navigator.push(context, route);
     setState(() {
       isLoading = true;
@@ -97,12 +112,13 @@ class _TodolistPageState extends State<TodolistPage> {
 
   Future<void> deleteById(String id) async{
     // Delete the item
-    final url = 'http://api.nstack.in/v1/todos/$id';
+    final url = 'http://192.168.1.8:8000/api/v1/todos/$id';
     final uri = Uri.parse(url);
     final response = await http.delete(uri);
     if(response.statusCode == 200){
+      showSuccessMessage("Suppression réussie !");
     // Remove item from list
-      final filtered = items.where((element) => element["_id"] != id).toList();
+      final filtered = items.where((element) => element["id"] != id).toList();
       setState(() {
         items = filtered;
       });
@@ -112,7 +128,7 @@ class _TodolistPageState extends State<TodolistPage> {
   }
 
   Future<void> fetchTodo() async {
-    final url = 'http://api.nstack.in/v1/todos?page=1&limit=10';
+    final url = 'http://192.168.1.8:8000/api/v1/todos';
     final uri = Uri.parse(url);
     final response = await http.get(uri);
     if(response.statusCode == 200){
@@ -135,6 +151,18 @@ class _TodolistPageState extends State<TodolistPage> {
         style: TextStyle(color: Colors.white),
       ),
       backgroundColor: Colors.red,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  void showSuccessMessage(String message)
+  {
+    final snackBar = SnackBar(
+      content: Text(
+        message,
+        style: TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Colors.green,
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }

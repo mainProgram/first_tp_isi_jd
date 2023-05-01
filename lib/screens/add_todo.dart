@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class AddTodoPage extends StatefulWidget {
   final Map? todo;
@@ -14,8 +15,10 @@ class AddTodoPage extends StatefulWidget {
 }
 
 class _AddTodoPageState extends State<AddTodoPage> {
+  DateTime selectedDateTime = DateTime.now();
   TextEditingController _titreController = TextEditingController();
   TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _dateEcheanceController = TextEditingController();
   bool isEdit = false;
 
   @override
@@ -28,6 +31,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
       final description = todo['description'];
       _titreController.text = title;
       _descriptionController.text = description;
+      _dateEcheanceController.text =  DateFormat('dd-MM-yyyy').format(DateTime.parse(todo['dateEcheance']));
     }
   }
 
@@ -37,6 +41,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
   Widget build(BuildContext context) {
      return Scaffold(
       appBar: AppBar(
+      elevation: 0.1,
+      backgroundColor: Color.fromRGBO(58, 66, 86, 1.0),
         title: Text(
           isEdit ? 'Modification' : 'Ajout de tâche'
         )
@@ -60,6 +66,31 @@ class _AddTodoPageState extends State<AddTodoPage> {
             maxLines: 5,
           ),
           SizedBox(height: 20,),
+          TextFormField(
+                  readOnly: true,
+                  controller: _dateEcheanceController,
+                  decoration: InputDecoration(
+                    labelText: 'Date d\'échéance',
+                  ),
+                  onTap: () async {
+                    await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2015),
+                      lastDate: DateTime(2025),
+                    ).then((selectedDate) {
+                      if (selectedDate != null) {
+                        selectedDateTime = selectedDate;
+                        _dateEcheanceController.text =
+                          DateFormat('dd-MM-yyyy').format(selectedDate);
+                      }
+                    }
+                  );
+                },
+              ),
+              const SizedBox(
+                height: 20,
+              ),
           ElevatedButton(
             onPressed: isEdit ? updateData : submitData, 
             child: Padding(
@@ -67,8 +98,14 @@ class _AddTodoPageState extends State<AddTodoPage> {
               child: Text(
                 isEdit ? "Modifier" : "Enregistrer"
               ),
-            )
-          )
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color.fromRGBO(58, 66, 86, 1.0),
+              textStyle: TextStyle(
+                fontSize: 20.0,
+              )
+            ),            
+          ),
         ],
       ),
     );
@@ -77,18 +114,19 @@ class _AddTodoPageState extends State<AddTodoPage> {
   Future<void> updateData() async{
     final todo = widget.todo;
     if(todo == null){
-      print("objectbgjugjg");
       return;
     }
-    final id = todo['_id'];
+    final id = todo['id'];
     final titre = _titreController.text;
     final description = _descriptionController.text;
+    final dateEcheance = _dateEcheanceController.text;
     final body = {
       "title" : titre,
       "description" : description,
       "is_completed" : false,
+      "dateEcheance" : dateEcheance,
     };
-    final url = 'http://api.nstack.in/v1/todos/$id';
+    final url = 'http://192.168.1.8:8000/api/v1/todos/$id';
     final uri = Uri.parse(url);
     final response = await http.put(
       uri, 
@@ -110,14 +148,15 @@ class _AddTodoPageState extends State<AddTodoPage> {
     // Get data
     final titre = _titreController.text;
     final description = _descriptionController.text;
-    // final dateEcheance = _dateEcheanceController.text;
+    final dateEcheance = _dateEcheanceController.text;
     final body = {
       "title" : titre,
       "description" : description,
       "is_completed" : false,
+      "dateEcheance" : dateEcheance,
     };
     // Submit data
-    final url = 'http://api.nstack.in/v1/todos';
+    final url = 'http://192.168.1.8:8000/api/v1/todos';
     final uri = Uri.parse(url);
     final response = await http.post(
       uri, 
@@ -132,6 +171,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
       showSuccessMessage("Creation réussie");
       _titreController.text = '';
       _descriptionController.text = '';
+      _dateEcheanceController.text = '';
     }
     else{
       showErrorMessage("Creation echouée");
